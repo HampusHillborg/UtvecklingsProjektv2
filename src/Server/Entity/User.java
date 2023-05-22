@@ -1,29 +1,19 @@
 package Server.Entity;
 
 import javax.swing.*;
-import java.io.*;
+import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class User implements Serializable {
-    private final String imagePath;
     private final String username;
-    private final int avatarHash;
+    private final byte[] avatarBytes;
 
-    public User(String username, ImageIcon avatar) {
-        // If avatar isn't jpg then compress
+    public User(String username, String imagePath) {
         this.username = username;
-        avatarHash = avatar.hashCode();
-
-        this.imagePath = "data/temp/" + avatarHash;
-        if (!Files.exists(Paths.get(this.imagePath))) {
-            try {
-                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(this.imagePath));
-                oos.writeObject(avatar);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
+        this.avatarBytes = loadImageBytes(imagePath);
     }
 
     public String getUsername() {
@@ -31,17 +21,18 @@ public class User implements Serializable {
     }
 
     public ImageIcon getAvatar() {
-        if (imagePath == null) return null;
+        if (avatarBytes == null) return null;
 
-        // Read the ImageIcon from the file
-        ImageIcon imageFile = null;
+        // Convert the byte array back to ImageIcon
+        return new ImageIcon(avatarBytes);
+    }
+
+    private byte[] loadImageBytes(String imagePath) {
         try {
-            imageFile = (ImageIcon) new ObjectInputStream(new FileInputStream(imagePath)).readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
+            return Files.readAllBytes(Paths.get(imagePath));
+        } catch (IOException e) {
+            throw new RuntimeException("Error loading image bytes: " + e.getMessage());
         }
-
-        return imageFile;
     }
 
     @Override
@@ -59,6 +50,6 @@ public class User implements Serializable {
     }
 
     public int getAvatarHash() {
-        return avatarHash;
+        return avatarBytes != null ? Arrays.hashCode(avatarBytes) : 0;
     }
 }
