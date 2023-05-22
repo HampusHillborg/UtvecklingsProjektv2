@@ -1,4 +1,4 @@
-package Entity;
+package Server.Entity;
 
 import javax.swing.*;
 import java.io.*;
